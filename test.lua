@@ -12,6 +12,7 @@ local VirtualUser = game:GetService("VirtualUser")
 local request = request or http_request or syn.request
 local player = Players.LocalPlayer
 local TeleportService = game:GetService("TeleportService")
+local USE_HTTP_HOP = true
 
 
 local config = {
@@ -137,22 +138,69 @@ local fields = {
     ["Pepper Patch"] = Vector3.new(-486, 124, 517),
     ["Mountain Top Field"] = Vector3.new(76, 176, -191)
 }
+local function getRandomPublicServer()
+    local placeId = game.PlaceId
+    local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+
+    local success, result = pcall(function()
+        return game:HttpGet(url)
+    end)
+
+    if not success then
+        warn("HTTP blocked, falling back to normal teleport")
+        USE_HTTP_HOP = false
+        return nil
+    end
+
+    local data = HttpService:JSONDecode(result)
+    local valid = {}
+
+    for _, server in ipairs(data.data or {}) do
+        if server.playing >= 2 and server.playing <= 3 then
+            table.insert(valid, server.id)
+        end
+    end
+
+    if #valid == 0 then
+        return nil
+    end
+
+    return valid[math.random(1, #valid)]
+end
+
+TeleportService.TeleportInitFailed:Connect(function(player, result, err)
+    warn("❌ Teleport failed:", result, err)
+    task.wait(5)
+    hopRandomServer()
+end)
+
 
 local function hopRandomServer()
     if config.stingerDetected then return end
     if not config.isRunning then return end
 
-    print("🔁 Hopping to random server...")
-    
+    print("🔁 Hopping servers...")
+
     task.wait(2)
-    
-    -- Delta-compatible: Just teleport to random server (Roblox picks for you)
+
     local placeId = game.PlaceId
-    
-    pcall(function()
-        TeleportService:Teleport(placeId, player)
-    end)
+
+    if USE_HTTP_HOP then
+        local serverId = getRandomPublicServer()
+        if serverId then
+            print("🌐 True random server:", serverId)
+            TeleportService:TeleportToPlaceInstance(placeId, serverId, player)
+            return
+        else
+            print("⚠️ No 2–3 player servers found, using fallback")
+        end
+    end
+
+    -- Fallback (Delta-safe)
+    print("🎲 Matchmaking random")
+    TeleportService:Teleport(placeId, player)
 end
+
 
 spawn(function()
     while true do
