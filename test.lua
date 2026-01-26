@@ -1520,7 +1520,21 @@ local function createGUI()
             countLabel.Text = "Detections: " .. config.detectionCount
         end
     end)
-end     
+end
+
+task.delay(3, function()
+    if not config.isRunning then
+        print("🔁 Auto-start after teleport")
+        config.isRunning = true
+        
+        if not config._descendantConnection then
+            config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
+        end
+        
+        hopRandomServer()
+    end
+end)
+
         
 
 print("🐝 Vicious Bee Stinger Detector v3.8 Loaded!")
