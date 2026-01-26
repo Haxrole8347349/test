@@ -1409,17 +1409,6 @@ local function createGUI()
             
             local serverTypeText = config.serverType == "Private" and "🔒 Private Server" or "🌐 Public Server"
             
-            sendWebhook(
-                "🚀 Detection Started", 
-                "Now monitoring for Vicious Bee stinger spawns! Anti-idle is active. 🔐 Secured with webhook token.", 
-                0x00AAFF, 
-                {
-                    {name = "🖥️ Server Type", value = serverTypeText, inline = true},
-                    {name = "📐 Target Size", value = "3.0×2.0×1.5", inline = true},
-                    {name = "🔐 Security", value = "Webhook Token Active", inline = true},
-                    {name = "⚠️ Whitelist", value = "40s timer enabled", inline = true}
-                }
-            )
             
             print("🎯 DETECTION ACTIVE - Watching for 'Thorn' parts with size 3×2×1.5...")
             print("🔄 Anti-idle system is active!")
