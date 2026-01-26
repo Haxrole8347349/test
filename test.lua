@@ -1336,9 +1336,6 @@ local function createGUI()
             
             if not config._descendantConnection then
                 config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
-                for _, obj in ipairs(Workspace:GetDescendants()) do
-                    onNewObject(obj)
-                end
                 print("✅ Monitoring Workspace for 'Thorn' parts with size 3×2×1.5...")
             end
             
