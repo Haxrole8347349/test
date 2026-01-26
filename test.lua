@@ -142,17 +142,18 @@ local function hopRandomServer()
     if config.stingerDetected then return end
     if not config.isRunning then return end
 
-    print("🔁 Hopping to new server...")
+    print("🔁 Hopping to random server...")
     
     task.wait(2)
     
-    -- Delta-compatible teleport (just use placeId, Roblox picks random server)
+    -- Delta-compatible: Just teleport to random server (Roblox picks for you)
     local placeId = game.PlaceId
     
     pcall(function()
-        game:GetService("TeleportService"):Teleport(placeId, player)
+        TeleportService:Teleport(placeId, player)
     end)
 end
+
 spawn(function()
     while true do
         task.wait(20) -- TIME PER SERVER (change if you want)
