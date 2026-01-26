@@ -142,46 +142,16 @@ local function hopRandomServer()
     if config.stingerDetected then return end
     if not config.isRunning then return end
 
-    local placeId = game.PlaceId
-    local url = "https://games.roblox.com/v1/games/"..placeId.."/servers/Public?sortOrder=Asc&limit=100"
-
-    local success, result = pcall(function()
-        return HttpService:JSONDecode(game:HttpGet(url))
-    end)
-
-    if not success or not result or not result.data then
-        warn("Failed to fetch server list")
-        return
-    end
-
-    local servers = {}
-
-    for _, server in ipairs(result.data) do
-        -- ONLY 2–3 PLAYER SERVERS
-        if server.playing >= 2 and server.playing <= 3 then
-            table.insert(servers, server.id)
-        end
-    end
-
-    -- fallback if none found
-    if #servers == 0 then
-        for _, server in ipairs(result.data) do
-            if server.playing >= 1 and server.playing <= 4 then
-                table.insert(servers, server.id)
-            end
-        end
-    end
-
-    if #servers == 0 then
-        warn("No suitable servers found")
-        return
-    end
-
-    local randomServer = servers[math.random(1, #servers)]
-    print("🔁 Hopping to random Bee Swarm server:", randomServer)
-
+    print("🔁 Hopping to new server...")
+    
     task.wait(2)
-    TeleportService:TeleportToPlaceInstance(placeId, randomServer, player)
+    
+    -- Delta-compatible teleport (just use placeId, Roblox picks random server)
+    local placeId = game.PlaceId
+    
+    pcall(function()
+        game:GetService("TeleportService"):Teleport(placeId, player)
+    end)
 end
 spawn(function()
     while true do
