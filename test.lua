@@ -13,6 +13,7 @@ local request = request or http_request or syn.request
 local player = Players.LocalPlayer
 local TeleportService = game:GetService("TeleportService")
 local USE_HTTP_HOP = true
+local lastHop = 0
 
 
 local config = {
@@ -176,6 +177,9 @@ end)
 
 
 local function hopRandomServer()
+    if tick() - lastHop < 40 then return end
+    lastHop = tick()
+
     if config.stingerDetected then return end
     if not config.isRunning then return end
 
@@ -204,7 +208,7 @@ end
 
 spawn(function()
     while true do
-        task.wait(20) -- TIME PER SERVER (change if you want)
+        task.wait(30) -- TIME PER SERVER (change if you want)
         if config.isRunning and not config.stingerDetected then
             hopRandomServer()
         end
@@ -969,6 +973,17 @@ local function onNewObject(obj)
 end
 
 local function createGUI()
+    task.delay(4, function()
+        if not config.isRunning then
+            print("🔁 Auto-starting detection...")
+            config.isRunning = true
+    
+            if not config._descendantConnection then
+                config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
+            end
+        end
+    end)
+
     if CoreGui:FindFirstChild("ViciousBeeHunterGUI") then
         CoreGui:FindFirstChild("ViciousBeeHunterGUI"):Destroy()
     end
@@ -1521,19 +1536,6 @@ local function createGUI()
         end
     end)
 end
-
-task.delay(3, function()
-    if not config.isRunning then
-        print("🔁 Auto-start after teleport")
-        config.isRunning = true
-        
-        if not config._descendantConnection then
-            config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
-        end
-        
-        hopRandomServer()
-    end
-end)
 
         
 
