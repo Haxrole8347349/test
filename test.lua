@@ -977,9 +977,10 @@ local function createGUI()
         if not config.isRunning then
             print("🔁 Auto-starting detection...")
             config.isRunning = true
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                onNewObject(obj)
+            end
     
-            if not config._descendantConnection then
-                config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
             end
         end
     end)
@@ -1397,8 +1398,6 @@ local function createGUI()
             
             config.isRunning = true
             
-            if not config._descendantConnection then
-                config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
                 print("✅ Monitoring Workspace for 'Thorn' parts with size 3×2×1.5...")
             end
             
