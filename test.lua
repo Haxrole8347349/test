@@ -14,6 +14,7 @@ local player = Players.LocalPlayer
 local TeleportService = game:GetService("TeleportService")
 local USE_HTTP_HOP = true
 local lastHop = 0
+getgenv().config = nil
 
 
 local config = {
