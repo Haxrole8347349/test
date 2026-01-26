@@ -208,7 +208,7 @@ end
 
 spawn(function()
     while true do
-        task.wait(60) -- TIME PER SERVER (change if you want)
+        task.wait(20) -- TIME PER SERVER (change if you want)
         if config.isRunning and not config.stingerDetected then
             hopRandomServer()
         end
