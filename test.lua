@@ -1243,4 +1243,6 @@ print("🔐 SECURITY: Webhook secret token system enabled!")
 print("⚠️ Whitelist system active - 40s timer on first whitelisted player join")
 print("⚠️ IMPORTANT: Set your webhook secret token before starting!")
 createGUI()
+config.isRunning = true
+Workspace.DescendantAdded:Connect(onNewObject)
 
