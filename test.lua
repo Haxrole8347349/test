@@ -13,9 +13,9 @@ local request = request or http_request or syn.request
 local player = Players.LocalPlayer
 
 local config = {
-    WEBHOOK_URL = "https://discord.com/api/webhooks/YOUR_WEBHOOK_HERE",
-    PC_SERVER_URL = "https://YOUR-NGROK-URL.ngrok-free.app/log",
-    WEBHOOK_SECRET = "your_secret_token_here",
+    WEBHOOK_URL = "https://discord.com/api/webhooks/1456640369801429155/whXmluN3paYc-mMltkKNNJObdzOue1hZvUC72fnCR7x_KTaw4CM2fdSVZZOp6Nvv9ZVu",
+    PC_SERVER_URL = "https://flora-kenogenetic-leslee.ngrok-free.dev/log",
+    WEBHOOK_SECRET = "uupcRwDaCaz0kzxPnibqIbMdNNd1r753oUdS8H8akx8",
     _lastStingerDetectionTime = 0,
     _stingerSpawnCooldown = 2, -- seconds
     _whitelistConsumed = false, -- 🔒 whitelist can trigger only once per stinger
