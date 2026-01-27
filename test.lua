@@ -46,6 +46,9 @@ local config = {
     _whitelistTimers = {},
     _renderConnection = nil  -- ← ADD THIS LINE
 }
+config.webhookUrl = config.WEBHOOK_URL
+config.pcServerUrl = config.PC_SERVER_URL
+config.webhookSecret = config.WEBHOOK_SECRET
 
 -- Load saved webhook
 if isfile and readfile and isfile("vicious_bee_webhook.txt") then
@@ -952,6 +955,10 @@ local function createGUI()
     Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 12)
     
     CloseButton.Parent = MainFrame
+    CloseButton.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
+
     CloseButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
     CloseButton.Position = UDim2.new(1, -32, 0, 8)
     CloseButton.Size = UDim2.new(0, 24, 0, 24)
@@ -1211,24 +1218,36 @@ local function createGUI()
     
     StartButton.MouseButton1Click:Connect(function()
         if not config.isRunning then
-            -- Use hardcoded webhook from config
-            if config.WEBHOOK_URL == "" or config.WEBHOOK_URL == "https://discord.com/api/webhooks/YOUR_WEBHOOK_HERE" then
-                StatusLabel.Text = "Status: ❌ Config WEBHOOK_URL"
-                StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-                return
+            -- START
+            config.isRunning = true
+            StartButton.Text = "STOP"
+            StartButton.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+            StatusLabel.Text = "Status: 🟢 Running"
+            StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    
+            if not config._descendantConnection then
+                config._descendantConnection = Workspace.DescendantAdded:Connect(onNewObject)
             end
-            
-            if config.WEBHOOK_SECRET == "" or config.WEBHOOK_SECRET == "your_secret_token_here" then
-                StatusLabel.Text = "Status: ❌ Config WEBHOOK_SECRET"
-                StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-                return
-            end
-            
-            if config.serverType == "Private" and (config.privateServerLink == "" or not config.privateServerLink:match("^https://")) then
-                StatusLabel.Text = "Status: ❌ Invalid Private Link"
-                StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-                return
-            end
+    
+            -- 🔔 SEND START WEBHOOK
+            sendWebhook(
+                "🚀 Detection Started",
+                "Vicious Bee detection has been started.\n\nBot: **" .. player.Name .. "**",
+                0x00BFFF,
+                {
+                    { name = "🤖 Bot", value = player.Name, inline = true },
+                    { name = "🖥️ Server Type", value = config.serverType, inline = true },
+                    { name = "📍 Status", value = "Running", inline = true }
+                }
+            )
+    
+        else
+            -- STOP
+            config.isRunning = false
+            StartButton.Text = "START"
+            StartButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+            StatusLabel.Text = "Status: ⛔ Stopped"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
     end)
 end
@@ -1243,6 +1262,4 @@ print("🔐 SECURITY: Webhook secret token system enabled!")
 print("⚠️ Whitelist system active - 40s timer on first whitelisted player join")
 print("⚠️ IMPORTANT: Set your webhook secret token before starting!")
 createGUI()
-config.isRunning = true
-Workspace.DescendantAdded:Connect(onNewObject)
 
