@@ -1228,8 +1228,10 @@ local function createGUI()
                 StatusLabel.Text = "Status: ❌ Invalid Private Link"
                 StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
                 return
-            end   
-        
+            end
+        end
+    end)
+end
 
 print("🐝 Vicious Bee Stinger Detector v3.8 Loaded!")
 print("📱 Opening GUI...")
