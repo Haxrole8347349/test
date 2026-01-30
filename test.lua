@@ -41,14 +41,76 @@ local config = {
     sizeTolerance = 0.1,
     stingerActiveTime = 240,
     _activeStatusTimer = nil,
-    whitelistPlayers = {"", "", "", "", ""},
+    whitelistPlayers = {},  -- Auto-synced from server
     whitelistTimer = 40,
     _whitelistTimers = {},
+    _lastWhitelistUpdate = 0,  -- NEW
+    _whitelistSyncInterval = 30,  -- Check every 30 seconds
     _renderConnection = nil  -- ← ADD THIS LINE
 }
 config.webhookUrl = config.WEBHOOK_URL
 config.pcServerUrl = config.PC_SERVER_URL
 config.webhookSecret = config.WEBHOOK_SECRET
+
+-- Auto-sync whitelist from server
+local function syncWhitelistFromServer()
+    if config.pcServerUrl == "" then 
+        return 
+    end
+    
+    spawn(function()
+        while true do
+            wait(config._whitelistSyncInterval)
+            
+            -- Extract base URL (remove /log endpoint)
+            local baseUrl = config.pcServerUrl:gsub("/log$", "")
+            local whitelistUrl = baseUrl .. "/whitelist"
+            
+            local success, response = pcall(function()
+                return request({
+                    Url = whitelistUrl,
+                    Method = "GET"
+                })
+            end)
+            
+            if success and response and response.StatusCode == 200 then
+                local parseSuccess, data = pcall(function()
+                    return HttpService:JSONDecode(response.Body)
+                end)
+                
+                if parseSuccess and data and data.players then
+                    local oldCount = #config.whitelistPlayers
+                    local newCount = #data.players
+                    
+                    -- Only update if something changed
+                    if oldCount ~= newCount or table.concat(config.whitelistPlayers, ",") ~= table.concat(data.players, ",") then
+                        config.whitelistPlayers = data.players
+                        config._lastWhitelistUpdate = os.time()
+                        config._whitelistSyncErrorLogged = false  -- Clear error flag on success
+                        
+                        print("🔄 Whitelist synced from server!")
+                        print("   Players:", table.concat(data.players, ", "))
+                        print("   Count:", newCount)
+                        
+                        -- Save to local file as backup
+                        if writefile then
+                            writefile("vicious_bee_whitelist.txt", HttpService:JSONEncode(data.players))
+                        end
+                    end
+                end
+            else
+                -- Don't spam errors, just log once
+                if not config._whitelistSyncErrorLogged then
+                    warn("⚠️ Failed to sync whitelist from server (will retry in 30s)")
+                    config._whitelistSyncErrorLogged = true
+                end
+            end
+        end
+    end)
+end
+
+-- Start whitelist sync when script loads
+syncWhitelistFromServer()
 
 -- Load saved webhook
 if isfile and readfile and isfile("vicious_bee_webhook.txt") then
@@ -906,7 +968,6 @@ local function createGUI()
     
     -- Whitelist slots
     local WhitelistLabel = Instance.new("TextLabel")
-    local WhitelistSlots = {}
     local WhitelistInfoLabel = Instance.new("TextLabel")
     
     -- Control buttons
@@ -969,52 +1030,54 @@ local function createGUI()
     
     Instance.new("UICorner", CloseButton)
     
-    -- ROW 1: WHITELIST (5 slots horizontally)
+    -- ROW 1: WHITELIST DISPLAY (Auto-synced from server)
+    local WhitelistLabel = Instance.new("TextLabel")
     WhitelistLabel.Parent = MainFrame
     WhitelistLabel.BackgroundTransparency = 1
     WhitelistLabel.Position = UDim2.new(0, 10, 0, 50)
     WhitelistLabel.Size = UDim2.new(1, -20, 0, 18)
     WhitelistLabel.Font = Enum.Font.GothamBold
-    WhitelistLabel.Text = "⚠️ Whitelist Players (40s Auto NOT ACTIVE):"
-    WhitelistLabel.TextColor3 = Color3.fromRGB(255, 150, 50)
+    WhitelistLabel.Text = "⚠️ Whitelist Players (Auto-Synced Every 30s):"
+    WhitelistLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
     WhitelistLabel.TextSize = 11
     WhitelistLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Display current whitelist (read-only)
+    local WhitelistDisplay = Instance.new("TextLabel")
+    WhitelistDisplay.Parent = MainFrame
+    WhitelistDisplay.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+    WhitelistDisplay.Position = UDim2.new(0, 10, 0, 72)
+    WhitelistDisplay.Size = UDim2.new(1, -20, 0, 26)
+    WhitelistDisplay.Font = Enum.Font.Gotham
+    WhitelistDisplay.Text = "Loading whitelist..."
+    WhitelistDisplay.TextColor3 = Color3.fromRGB(180, 180, 180)
+    WhitelistDisplay.TextSize = 10
+    WhitelistDisplay.TextWrapped = true
     
-    for i = 1, 5 do
-        local slot = Instance.new("TextBox")
-        slot.Parent = MainFrame
-        slot.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-        slot.Position = UDim2.new((i-1) * 0.2, 10 + (i-1) * 2, 0, 72)
-        slot.Size = UDim2.new(0.2, -12, 0, 26)
-        slot.Font = Enum.Font.Gotham
-        slot.PlaceholderText = "Player " .. i
-        slot.Text = config.whitelistPlayers[i]
-        slot.TextColor3 = Color3.fromRGB(255, 255, 255)
-        slot.TextSize = 10
-        slot.ClearTextOnFocus = false
-        slot.Name = "WhitelistSlot" .. i
-        
-        Instance.new("UICorner", slot).CornerRadius = UDim.new(0, 6)
-        
-        WhitelistSlots[i] = slot
-        
-        slot.FocusLost:Connect(function()
-            config.whitelistPlayers[i] = slot.Text
-            if writefile then
-                writefile("vicious_bee_whitelist.txt", HttpService:JSONEncode(config.whitelistPlayers))
-                print("✅ Whitelist saved:", table.concat(config.whitelistPlayers, ", "))
+    Instance.new("UICorner", WhitelistDisplay).CornerRadius = UDim.new(0, 6)
+    
+    -- Update display every 5 seconds
+    spawn(function()
+        while true do
+            wait(5)
+            if #config.whitelistPlayers > 0 then
+                WhitelistDisplay.Text = "Whitelisted: " .. table.concat(config.whitelistPlayers, ", ")
+                WhitelistDisplay.TextColor3 = Color3.fromRGB(255, 200, 50)
+            else
+                WhitelistDisplay.Text = "No whitelisted players (add via whitelist_manager.py)"
+                WhitelistDisplay.TextColor3 = Color3.fromRGB(150, 150, 150)
             end
-        end)
-    end
+        end
+    end)
     
-    -- Whitelist info label
+    -- Whitelist info label with sync status
     WhitelistInfoLabel.Parent = MainFrame
     WhitelistInfoLabel.BackgroundTransparency = 1
     WhitelistInfoLabel.Position = UDim2.new(0, 10, 0, 102)
     WhitelistInfoLabel.Size = UDim2.new(1, -20, 0, 15)
     WhitelistInfoLabel.Font = Enum.Font.Gotham
-    WhitelistInfoLabel.Text = "ℹ️ Only 1st whitelisted player join triggers 40s timer"
-    WhitelistInfoLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    WhitelistInfoLabel.Text = "🔄 Auto-syncing from server every 30s"
+    WhitelistInfoLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
     WhitelistInfoLabel.TextSize = 9
     WhitelistInfoLabel.TextWrapped = true
     WhitelistInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
