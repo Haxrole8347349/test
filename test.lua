@@ -966,10 +966,6 @@ local function createGUI()
     local Title = Instance.new("TextLabel")
     local CloseButton = Instance.new("TextButton")
     
-    -- Whitelist slots
-    local WhitelistLabel = Instance.new("TextLabel")
-    local WhitelistInfoLabel = Instance.new("TextLabel")
-    
     -- Control buttons
     local StartButton = Instance.new("TextButton")
     local ViewLogButton = Instance.new("TextButton")
@@ -998,7 +994,7 @@ local function createGUI()
     MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     MainFrame.BorderSizePixel = 0
     MainFrame.Position = UDim2.new(0.5, -250, 0.5, -190)
-    MainFrame.Size = UDim2.new(0, 500, 0, 380)
+    MainFrame.Size = UDim2.new(0, 500, 0, 300)
     MainFrame.Active = true
     MainFrame.Draggable = true
     
@@ -1030,63 +1026,11 @@ local function createGUI()
     
     Instance.new("UICorner", CloseButton)
     
-    -- ROW 1: WHITELIST DISPLAY (Auto-synced from server)
-    local WhitelistLabel = Instance.new("TextLabel")
-    WhitelistLabel.Parent = MainFrame
-    WhitelistLabel.BackgroundTransparency = 1
-    WhitelistLabel.Position = UDim2.new(0, 10, 0, 50)
-    WhitelistLabel.Size = UDim2.new(1, -20, 0, 18)
-    WhitelistLabel.Font = Enum.Font.GothamBold
-    WhitelistLabel.Text = "⚠️ Whitelist Players (Auto-Synced Every 30s):"
-    WhitelistLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-    WhitelistLabel.TextSize = 11
-    WhitelistLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- Display current whitelist (read-only)
-    local WhitelistDisplay = Instance.new("TextLabel")
-    WhitelistDisplay.Parent = MainFrame
-    WhitelistDisplay.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
-    WhitelistDisplay.Position = UDim2.new(0, 10, 0, 72)
-    WhitelistDisplay.Size = UDim2.new(1, -20, 0, 26)
-    WhitelistDisplay.Font = Enum.Font.Gotham
-    WhitelistDisplay.Text = "Loading whitelist..."
-    WhitelistDisplay.TextColor3 = Color3.fromRGB(180, 180, 180)
-    WhitelistDisplay.TextSize = 10
-    WhitelistDisplay.TextWrapped = true
-    
-    Instance.new("UICorner", WhitelistDisplay).CornerRadius = UDim.new(0, 6)
-    
-    -- Update display every 5 seconds
-    spawn(function()
-        while true do
-            wait(5)
-            if #config.whitelistPlayers > 0 then
-                WhitelistDisplay.Text = "Whitelisted: " .. table.concat(config.whitelistPlayers, ", ")
-                WhitelistDisplay.TextColor3 = Color3.fromRGB(255, 200, 50)
-            else
-                WhitelistDisplay.Text = "No whitelisted players (add via whitelist_manager.py)"
-                WhitelistDisplay.TextColor3 = Color3.fromRGB(150, 150, 150)
-            end
-        end
-    end)
-    
-    -- Whitelist info label with sync status
-    WhitelistInfoLabel.Parent = MainFrame
-    WhitelistInfoLabel.BackgroundTransparency = 1
-    WhitelistInfoLabel.Position = UDim2.new(0, 10, 0, 102)
-    WhitelistInfoLabel.Size = UDim2.new(1, -20, 0, 15)
-    WhitelistInfoLabel.Font = Enum.Font.Gotham
-    WhitelistInfoLabel.Text = "🔄 Auto-syncing from server every 30s"
-    WhitelistInfoLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-    WhitelistInfoLabel.TextSize = 9
-    WhitelistInfoLabel.TextWrapped = true
-    WhitelistInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
     -- ROW 2: CONTROLS & INFO
     -- Left side: Start button
     StartButton.Parent = MainFrame
     StartButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-    StartButton.Position = UDim2.new(0, 10, 0, 125)
+    StartButton.Position = UDim2.new(0, 10, 0, 50)
     StartButton.Size = UDim2.new(0.3, -10, 0, 38)
     StartButton.Font = Enum.Font.GothamBold
     StartButton.Text = "START"
@@ -1098,7 +1042,7 @@ local function createGUI()
     -- Middle: View Log
     ViewLogButton.Parent = MainFrame
     ViewLogButton.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
-    ViewLogButton.Position = UDim2.new(0.33, 0, 0, 125)
+    ViewLogButton.Position = UDim2.new(0.33, 0, 0, 50)
     ViewLogButton.Size = UDim2.new(0.3, -10, 0, 38)
     ViewLogButton.Font = Enum.Font.GothamBold
     ViewLogButton.Text = "📋 LOG"
@@ -1110,7 +1054,7 @@ local function createGUI()
     -- Right side: Server type buttons stacked
     PublicButton.Parent = MainFrame
     PublicButton.BackgroundColor3 = config.serverType == "Public" and Color3.fromRGB(50, 150, 255) or Color3.fromRGB(60, 60, 65)
-    PublicButton.Position = UDim2.new(0.66, 5, 0, 125)
+    PublicButton.Position = UDim2.new(0.66, 5, 0, 50)
     PublicButton.Size = UDim2.new(0.34, -15, 0, 17)
     PublicButton.Font = Enum.Font.GothamBold
     PublicButton.Text = "🌐 Public"
@@ -1121,7 +1065,7 @@ local function createGUI()
     
     PrivateButton.Parent = MainFrame
     PrivateButton.BackgroundColor3 = config.serverType == "Private" and Color3.fromRGB(50, 150, 255) or Color3.fromRGB(60, 60, 65)
-    PrivateButton.Position = UDim2.new(0.66, 5, 0, 146)
+    PrivateButton.Position = UDim2.new(0.66, 5, 0, 71)
     PrivateButton.Size = UDim2.new(0.34, -15, 0, 17)
     PrivateButton.Font = Enum.Font.GothamBold
     PrivateButton.Text = "🔒 Private"
@@ -1146,7 +1090,7 @@ local function createGUI()
     Instance.new("UICorner", PrivateServerBox).CornerRadius = UDim.new(0, 8)
     
     -- INFO SECTION (Compact 2-column grid layout)
-    local infoStartY = 210
+    local infoStartY = 135
     
     StatusLabel.Parent = MainFrame
     StatusLabel.Name = "StatusLabel"
