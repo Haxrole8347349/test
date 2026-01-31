@@ -1,6 +1,7 @@
 -- Vicious Bee Stinger Hunter Script v3.7 - SECURED WITH WEBHOOK TOKEN + WHITELIST
 -- Detects "Thorn" parts (Size: 3×2×1.5) that spawn near fields (ONCE per spawn event)
 -- NEW: Whitelist system - Auto marks as NOT ACTIVE after 50 seconds for whitelisted players
+getgenv()._ViciousBeeWhitelistSync = getgenv()._ViciousBeeWhitelistSync or false
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -54,19 +55,22 @@ config.pcServerUrl = config.PC_SERVER_URL
 config.webhookSecret = config.WEBHOOK_SECRET
 
 local function syncWhitelistFromServer()
-    -- 🔒 PREVENT MULTIPLE LOOPS
-    if config._whitelistSyncStarted then
+    -- 🔒 PREVENT MULTIPLE LOOPS (GLOBAL CHECK - survives script reloads)
+    if getgenv()._ViciousBeeWhitelistSync then
+        warn("⛔ Whitelist sync already running globally - skipping")
         return
     end
-    config._whitelistSyncStarted = true
+    getgenv()._ViciousBeeWhitelistSync = true
 
     if config.pcServerUrl == "" then 
         return 
     end
     
-    spawn(function()
+    task.spawn(function()  -- ✅ USE task.spawn (more reliable than spawn)
         while true do
             task.wait(config._whitelistSyncInterval)
+            
+            print("📡 Whitelist sync tick:", os.clock())  -- ← DEBUG LINE
 
             -- Extract base URL (remove /log endpoint)
             local baseUrl = config.pcServerUrl:gsub("/log$", "")
