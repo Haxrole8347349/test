@@ -24,6 +24,7 @@ local config = {
     _whitelistAddedConnection = nil,   -- ← ADD THIS
     _whitelistRemovingConnection = nil, -- ← ADD THIS
     _whitelistLock = false,            -- ← ADD THIS
+    _whitelistSyncStarted = false,
     _monitoringActive = false,
     playerCountThreshold = 6,
     webhookUrl = "",
@@ -52,56 +53,53 @@ config.webhookUrl = config.WEBHOOK_URL
 config.pcServerUrl = config.PC_SERVER_URL
 config.webhookSecret = config.WEBHOOK_SECRET
 
--- Auto-sync whitelist from server
 local function syncWhitelistFromServer()
+    -- 🔒 PREVENT MULTIPLE LOOPS
+    if config._whitelistSyncStarted then
+        return
+    end
+    config._whitelistSyncStarted = true
+
     if config.pcServerUrl == "" then 
         return 
     end
     
     spawn(function()
         while true do
-            wait(config._whitelistSyncInterval)
-            
+            task.wait(config._whitelistSyncInterval)
+
             -- Extract base URL (remove /log endpoint)
             local baseUrl = config.pcServerUrl:gsub("/log$", "")
             local whitelistUrl = baseUrl .. "/whitelist"
-            
+
             local success, response = pcall(function()
                 return request({
                     Url = whitelistUrl,
                     Method = "GET"
                 })
             end)
-            
+
             if success and response and response.StatusCode == 200 then
                 local parseSuccess, data = pcall(function()
                     return HttpService:JSONDecode(response.Body)
                 end)
-                
+
                 if parseSuccess and data and data.players then
-                    local oldCount = #config.whitelistPlayers
-                    local newCount = #data.players
-                    
-                    -- Only update if something changed
-                    if oldCount ~= newCount or table.concat(config.whitelistPlayers, ",") ~= table.concat(data.players, ",") then
+                    if table.concat(config.whitelistPlayers, ",") ~= table.concat(data.players, ",") then
                         config.whitelistPlayers = data.players
                         config._lastWhitelistUpdate = os.time()
-                        config._whitelistSyncErrorLogged = false  -- Clear error flag on success
+                        config._whitelistSyncErrorLogged = false
+
+                        print("🔄 Whitelist synced from server:", table.concat(data.players, ", "))
                         
-                        print("🔄 Whitelist synced from server!")
-                        print("   Players:", table.concat(data.players, ", "))
-                        print("   Count:", newCount)
-                        
-                        -- Save to local file as backup
                         if writefile then
                             writefile("vicious_bee_whitelist.txt", HttpService:JSONEncode(data.players))
                         end
                     end
                 end
             else
-                -- Don't spam errors, just log once
                 if not config._whitelistSyncErrorLogged then
-                    warn("⚠️ Failed to sync whitelist from server (will retry in 30s)")
+                    warn("⚠️ Failed to sync whitelist from server (retrying every 30s)")
                     config._whitelistSyncErrorLogged = true
                 end
             end
